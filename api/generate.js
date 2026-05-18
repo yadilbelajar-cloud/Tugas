@@ -11,33 +11,26 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'API Key belum dikonfigurasi di Vercel.' });
     }
 
-    // Inisialisasi API dengan versi yang lebih stabil
+    // Menginisialisasi dengan apiVersion 'v1' untuk menghindari error 404 pada v1beta
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
     try {
-        // Menggunakan model spesifik: gemini-1.5-flash
+        // Mengambil model secara eksplisit dari API v1
         const model = genAI.getGenerativeModel({ 
             model: "gemini-1.5-flash"
-        });
-        
-        const fullPrompt = `Tugas Pemrograman: ${prompt}\n\nBerikan kode yang benar, penjelasan singkat, dan tips.`;
+        }, { apiVersion: 'v1' }); 
 
-        const result = await model.generateContent(fullPrompt);
+        const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();
 
-        if (!text) {
-            throw new Error("AI memberikan respon kosong.");
-        }
-
         return res.status(200).json({ text: text });
     } catch (error) {
-        console.error("AI Error Detail:", error);
+        console.error("Detail Error:", error);
         
-        // Memberikan detail error asli dari Google agar mudah dilacak
-        const errorMessage = error.message || "Gagal memproses AI.";
+        // Memberikan pesan yang lebih spesifik jika terjadi error lagi
         return res.status(500).json({ 
-            error: `Detail Error: ${errorMessage}` 
+            error: `Detail Error: ${error.message}` 
         });
     }
 }
