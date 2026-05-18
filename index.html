@@ -1,33 +1,88 @@
-async function sendToAI() {
-    const promptInput = document.getElementById('promptInput').value;
-    const output = document.getElementById('responseOutput');
-    const resultSection = document.getElementById('resultSection');
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Tutor Pemrograman</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
+        .glass { background: rgba(22, 27, 34, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body class="bg-[#0d1117] text-gray-200 min-h-screen p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-extrabold text-white tracking-tight italic">
+                AI<span class="text-blue-500 font-normal">ASSISTANT</span>
+            </h1>
+            <p class="text-gray-400 mt-2">Asisten cerdas untuk tugas pemrograman Anda</p>
+        </header>
 
-    if (!promptInput) return;
+        <div class="glass rounded-2xl p-6 shadow-2xl mb-8">
+            <textarea id="promptInput" rows="5" 
+                class="w-full bg-[#010409] border border-gray-700 rounded-xl p-4 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all placeholder-gray-600"
+                placeholder="Contoh: Buatkan kode Python untuk sistem kasir sederhana..."></textarea>
+            
+            <button onclick="sendToAI()" id="btnSubmit"
+                class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all flex justify-center items-center gap-3">
+                <span id="btnText">Dapatkan Solusi</span>
+                <div id="btnLoader" class="hidden animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+            </button>
+        </div>
 
-    try {
-        const response = await fetch('/api/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: promptInput })
-        });
+        <div id="resultSection" class="hidden glass rounded-2xl p-6 animate-fadeIn">
+            <h2 class="text-sm uppercase tracking-widest text-blue-400 font-bold mb-4">Hasil Analisis AI:</h2>
+            <div id="responseOutput" class="font-mono text-sm leading-relaxed whitespace-pre-wrap text-gray-100 overflow-x-auto">
+            </div>
+        </div>
+    </div>
 
-        // 1. Ambil data sebagai JSON
-        const data = await response.json();
+    <script>
+        async function sendToAI() {
+            const prompt = document.getElementById('promptInput').value;
+            const output = document.getElementById('responseOutput');
+            const resultSection = document.getElementById('resultSection');
+            const btnText = document.getElementById('btnText');
+            const btnLoader = document.getElementById('btnLoader');
+            const btn = document.getElementById('btnSubmit');
 
-        // 2. Cek di Console (Tekan F12 di browser saat tes)
-        console.log("Data dari Server:", data);
+            if (!prompt.trim()) return alert("Tuliskan tugas Anda terlebih dahulu!");
 
-        // 3. Validasi sebelum menampilkan
-        if (data && data.text) {
-            output.innerText = data.text;
-        } else {
-            output.innerText = "Error: Format data tidak sesuai (Undefined).";
+            // UI Loading State
+            btnText.innerText = "Sedang Berpikir...";
+            btnLoader.classList.remove('hidden');
+            btn.disabled = true;
+            btn.classList.add('opacity-70');
+            resultSection.classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+
+                const data = await response.json();
+
+                if (data && data.text) {
+                    output.textContent = data.text;
+                    resultSection.classList.remove('hidden');
+                } else {
+                    throw new Error(data.error || "Format data tidak sesuai.");
+                }
+            } catch (error) {
+                console.error("Detail Error:", error);
+                output.textContent = "Terjadi kesalahan: " + error.message;
+                resultSection.classList.remove('hidden');
+            } finally {
+                btnText.innerText = "Dapatkan Solusi";
+                btnLoader.classList.add('hidden');
+                btn.disabled = false;
+                btn.classList.remove('opacity-70');
+            }
         }
-
-        resultSection.classList.remove('hidden');
-    } catch (error) {
-        output.innerText = "Koneksi gagal: " + error.message;
-        resultSection.classList.remove('hidden');
-    }
-}
+    </script>
+</body>
+</html>
