@@ -34,9 +34,10 @@ export default async function handler(req, res) {
     } catch (error) {
         console.error("AI Error Detail:", error);
         
-        // Memberikan pesan error yang lebih informatif jika model tidak ditemukan
+        // Memberikan detail error asli dari Google agar mudah dilacak
+        const errorMessage = error.message || "Gagal memproses AI.";
         return res.status(500).json({ 
-            error: "Gagal memproses AI. Pastikan API Key benar dan model tersedia." 
+            error: `Detail Error: ${errorMessage}` 
         });
     }
 }
